@@ -1,0 +1,35 @@
+body {
+    height: 100vh;
+    padding: 0;
+    margin: 0;
+    background-color: black;
+}
+
+.field {
+    height: 100vh;
+    background-color: rgba(110, 21, 21, 0.849);
+
+}
+
+.cell {
+    position: absolute;
+    background-color: #24bb33d3;
+    border: 1px dotted #409e4795;
+}
+
+.snake {
+    background-color: #4c72dbc2;
+}
+
+.snake-tail {
+    background-color: #4c72dbc2;
+}
+
+.snake-head {
+    background-color: #2b2ed5da;
+}
+
+.food {
+    background-color: #9f2020da;
+}
+
