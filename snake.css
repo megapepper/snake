@@ -33,3 +33,21 @@ body {
     background-color: #9f2020da;
 }
 
+.score {
+    position: absolute;
+    background-color: #8d28c4da;
+    border: 1px dotted #8d28c4da;
+    border-radius: 5%;
+    opacity: 50%;
+    align-content: center;
+    text-align: center;
+    font-family: Arial;
+    font-size: 20px;
+    font-weight: bold;
+    color: rgb(6, 19, 122);
+}
+
+.menu {
+    display: flex;
+    background-color: #8d28c4da;
+}

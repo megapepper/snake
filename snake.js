@@ -6,7 +6,7 @@ function print(obj) {
     console.log(JSON.stringify(obj))
 }
 
-document.onkeydown = keyBar; 
+document.onkeydown = keyBar;
 
 let timeMove = 400;
 const delay = 50;
@@ -59,6 +59,22 @@ function initFood() {
     }
 }
 
+function initScore() {
+    let field = document.getElementsByClassName('field')[0];
+    let cell = document.createElement('div');
+    cell.className = 'score';
+    cell.style.top = `${0.5 * cell_size}px`;
+    cell.style.left = `${(cols - 3) * cell_size}px`;
+    cell.style.height = `${1 * cell_size}px`;
+    cell.style.width = `${2 * cell_size}px`;
+    cell.style.marginLeft = `${margin_side}px`;
+    cell.style.marginRight = `${margin_side}px`;
+    cell.style.marginTop = `${margin_top}px`;
+    cell.style.marginBottom = `${margin_top}px`;
+    cell.textContent = `Score: ${cntFoodEaten}`;
+    field.appendChild(cell);
+}
+
 function initField() {
     let field = document.getElementsByClassName('field')[0];
     for (let i = 0; i < rows; i++) {
@@ -78,6 +94,7 @@ function initField() {
     }
     initSnake();
     initFood();
+    initScore();
     startInterval();
 }
 
@@ -114,10 +131,14 @@ function drawFood(pos, flag = true) {
     else {
         cells[pos].classList.remove('food');
     }
-
 }
 
-function move_right() {
+function drawScore() {
+    let cell = document.getElementsByClassName('score')[0];
+    cell.textContent = `Score: ${cntFoodEaten}`;
+}
+
+function move(dir) {
     [head_row, head_col] = snake[0];
     if (foodEaten) {
         [tail_row, tail_col] = snake.at(-1);
@@ -126,58 +147,24 @@ function move_right() {
     else {
         [tail_row, tail_col] = snake.pop();
     }
-
-    new_head_col = head_col + 1 >= cols ? 0 : head_col + 1;
-    snake.unshift([head_row, new_head_col]);
-
-    drawSnake(head_row, head_col, tail_row, tail_col);
-}
-
-function move_left() {
-    [head_row, head_col] = snake[0];
-    if (foodEaten) {
-        [tail_row, tail_col] = snake.at(-1);
-        foodEaten = false;
+    switch (dir) {
+        case RIGHT:
+            new_head_col = head_col + 1 >= cols ? 0 : head_col + 1;
+            snake.unshift([head_row, new_head_col]);
+            break;
+        case LEFT:
+            new_head_col = head_col - 1 < 0 ? cols - 1 : head_col - 1;
+            snake.unshift([head_row, new_head_col]);
+            break;
+        case UP:
+            new_head_row = head_row - 1 < 0 ? rows - 1 : head_row - 1;
+            snake.unshift([new_head_row, head_col]);
+            break;
+        case DOWN:
+            new_head_row = head_row + 1 >= rows ? 0 : head_row + 1;
+            snake.unshift([new_head_row, head_col]);
+            break;
     }
-    else {
-        [tail_row, tail_col] = snake.pop();
-    }
-
-    new_head_col = head_col - 1 < 0 ? cols - 1 : head_col - 1;
-    snake.unshift([head_row, new_head_col]);
-
-    drawSnake(head_row, head_col, tail_row, tail_col);
-}
-
-function move_up() {
-    [head_row, head_col] = snake[0];
-    if (foodEaten) {
-        [tail_row, tail_col] = snake.at(-1);
-        foodEaten = false;
-    }
-    else {
-        [tail_row, tail_col] = snake.pop();
-    }
-
-    new_head_row = head_row - 1 < 0 ? rows - 1 : head_row - 1;
-    snake.unshift([new_head_row, head_col]);
-
-    drawSnake(head_row, head_col, tail_row, tail_col);
-}
-
-function move_down() {
-    [head_row, head_col] = snake[0];
-    if (foodEaten) {
-        [tail_row, tail_col] = snake.at(-1);
-        foodEaten = false;
-    }
-    else {
-        [tail_row, tail_col] = snake.pop();
-    }
-
-    new_head_row = head_row + 1 >= rows ? 0 : head_row + 1;
-    snake.unshift([new_head_row, head_col]);
-
     drawSnake(head_row, head_col, tail_row, tail_col);
 }
 
@@ -209,7 +196,7 @@ function increaseSpeed() {
     }
 }
 
-function checkFoodEaten() {
+function eatFood() {
     let snake1d = snake.map(function (x) { return x[0] * cols + x[1]; });
     head_pos = snake1d[0];
     if (food.includes(head_pos)) {
@@ -217,6 +204,7 @@ function checkFoodEaten() {
         generateFood();
         foodEaten = true;
         cntFoodEaten++;
+        drawScore();
         increaseSpeed();
     }
 }
@@ -253,26 +241,17 @@ let timeDelay = 0;
 let intervalId;
 
 function startInterval() {
-        intervalId = setInterval(() => {
+    intervalId = setInterval(() => {
         timeDelay += delay;
         if (timeDelay >= timeMove) {
             timeDelay = 0;
             if (keyCode == null) {
                 return
             }
-            if (keyCode == RIGHT) {
-                move_right();
+            if ([RIGHT, LEFT, UP, DOWN].includes(keyCode)) {
+                move(keyCode);
             }
-            if (keyCode == LEFT) {
-                move_left();
-            }
-            if (keyCode == UP) {
-                move_up();
-            }
-            if (keyCode == DOWN) {
-                move_down();
-            }
-            checkFoodEaten();
+            eatFood();
             checkLoss();
             prevKeyCode = keyCode;
         }
