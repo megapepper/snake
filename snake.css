@@ -48,6 +48,52 @@ body {
 }
 
 .menu {
-    display: flex;
-    background-color: #8d28c4da;
+    position: absolute;
+    background-color: #bd65b8;
+    border: 2px solid #80367b;
+    border-radius: 5%;
+    text-align: center;
+    font-family: Arial;
+    font-weight: bold;
+    font-size: 20px;
+    box-shadow: 5px 5px 5px #00000095;
+}
+
+.menu-header {
+    text-align: center;
+    height: 15%;
+    margin-top: 5%;
+    color: #09620eda;
+    font-size: 22px;
+}
+
+.setting {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    text-align: left;
+    align-items: center;
+    height: 15%;
+    margin-top: 5%;
+    margin-left: 5%;
+    color: #0a6e0fda;
+}
+
+.start-button {
+    background-color: #0b8711da;
+    width: 120px;
+    height: 40px;
+    font-size: 22px;
+}
+
+.edit {
+    height: 20px;
+    width: 30px;
+    text-align: center;
+    background-color: #be6cba;
+    font-size: 16px;
+}
+
+.toggle {
+    height: 18px;
+    accent-color: #0b8711da;
 }

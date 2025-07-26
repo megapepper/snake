@@ -10,32 +10,51 @@ document.onkeydown = keyBar;
 
 let timeMove = 400;
 const delay = 50;
-const cell_size = 50;
+const cellSize = 50;
 const LEFT = 37;
 const UP = 38;
 const RIGHT = 39;
 const DOWN = 40;
 const SPACE = 32;
+const SETTINGS = 83;
 const direction_codes = { LEFT: 1, UP: 2, RIGHT: 3, DOWN: 4 };
 const w = window.innerWidth;
 const h = window.innerHeight;
+const wMenu = 300;
+const hMenu = 300;
+const initSnakeLen = 3;
 
 let prevKeyCode = RIGHT;
-let rows = Math.floor(h / (cell_size));
-let cols = Math.floor(w / cell_size);
-let matrix = Array.from({ length: rows }, () => new Array(cols).fill(0));
+let rows = Math.floor(h / (cellSize));
+let cols = Math.floor(w / cellSize);
 let cells;
 let snake;
 let food = [];
 let foodEaten = false;
 let cntFoodEaten = 0;
-let initCntFood = 3;
-let immortal = false;
+let initCntFood;
+let immortal;
+let boost;
 let paused = false;
+let menuShow = false;
+let timeReduce = 0.8;
 
-const margin_side = Math.floor((w - cell_size * cols) / 2);
-const margin_top = Math.floor((h - cell_size * rows) / 2);
+const margin_side = Math.floor((w - cellSize * cols) / 2);
+const margin_top = Math.floor((h - cellSize * rows) / 2);
 
+function initConfig() {
+    if (localStorage.getItem('userConfig') !== null) {
+        let userConfigStr = localStorage.getItem('userConfig');
+        let userConfig = JSON.parse(userConfigStr);
+        initCntFood = userConfig.initCntFood;
+        immortal = userConfig.immortal;
+        boost = userConfig.boost;
+    } else {
+        initCntFood = 1;
+        immortal = false;
+        boost = false;
+    }
+}
 
 function initSnake() {
     row_mid = Math.floor(rows / 2);
@@ -63,10 +82,10 @@ function initScore() {
     let field = document.getElementsByClassName('field')[0];
     let cell = document.createElement('div');
     cell.className = 'score';
-    cell.style.top = `${0.5 * cell_size}px`;
-    cell.style.left = `${(cols - 3) * cell_size}px`;
-    cell.style.height = `${1 * cell_size}px`;
-    cell.style.width = `${2 * cell_size}px`;
+    cell.style.top = `${0.5 * cellSize}px`;
+    cell.style.left = `${(cols - 3) * cellSize}px`;
+    cell.style.height = `${1 * cellSize}px`;
+    cell.style.width = `${2 * cellSize}px`;
     cell.style.marginLeft = `${margin_side}px`;
     cell.style.marginRight = `${margin_side}px`;
     cell.style.marginTop = `${margin_top}px`;
@@ -75,16 +94,78 @@ function initScore() {
     field.appendChild(cell);
 }
 
+function initMenu() {
+    let menu = document.getElementsByClassName('menu')[0];
+    menu.style.top = `${(rows / 2) * cellSize - hMenu / 2}px`;
+    menu.style.left = `${(cols / 2) * cellSize - wMenu / 2}px`;
+    menu.style.height = `${hMenu}px`;
+    menu.style.width = `${wMenu}px`;
+    menu.style.marginLeft = `${margin_side}px`;
+    menu.style.marginRight = `${margin_side}px`;
+    menu.style.marginTop = `${margin_top}px`;
+    menu.style.marginBottom = `${margin_top}px`;
+    menu.style.visibility = 'visible';
+
+    initConfig();
+
+    let setting = document.createElement('div');
+    setting.className = 'setting';
+    let setName = document.createElement('div');
+    setName.textContent = 'Initial amount of food: ';
+    let edit = document.createElement('input');
+    edit.id = 'init-food';
+    edit.className = 'edit';
+    edit.type = 'number';
+    edit.min = '1';
+    edit.max = '5';
+    edit.value = initCntFood;
+    setting.appendChild(setName);
+    setting.appendChild(edit);
+    menu.appendChild(setting);
+
+    setting = document.createElement('div');
+    setting.className = 'setting';
+    setName = document.createElement('div');
+    setName.textContent = 'Increase speed: ';
+    let checkBox = document.createElement('input');
+    checkBox.type = 'checkbox';
+    checkBox.id = 'boost';
+    checkBox.className = 'toggle';
+    checkBox.checked = boost;
+    setting.appendChild(setName);
+    setting.appendChild(checkBox);
+    menu.appendChild(setting);
+
+    setting = document.createElement('div');
+    setting.className = 'setting';
+    setName = document.createElement('div');
+    setName.textContent = 'Immortality mode: ';
+    checkBox = document.createElement('input');
+    checkBox.type = 'checkbox';
+    checkBox.id = 'immortal';
+    checkBox.className = 'toggle';
+    checkBox.checked = immortal;
+    setting.appendChild(setName);
+    setting.appendChild(checkBox);
+    menu.appendChild(setting);
+
+    let startButton = document.createElement('button');
+    startButton.className = 'start-button';
+    startButton.textContent = 'Start';
+    startButton.addEventListener('click', startButtonClick);
+    menu.appendChild(startButton);
+}
+
 function initField() {
     let field = document.getElementsByClassName('field')[0];
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
             let cell = document.createElement('div');
             cell.className = 'cell';
-            cell.style.top = `${i * cell_size}px`;
-            cell.style.left = `${j * cell_size}px`;
-            cell.style.height = `${cell_size}px`;
-            cell.style.width = `${cell_size}px`;
+            cell.style.top = `${i * cellSize}px`;
+            cell.style.left = `${j * cellSize}px`;
+            cell.style.height = `${cellSize}px`;
+            cell.style.width = `${cellSize}px`;
             cell.style.marginLeft = `${margin_side}px`;
             cell.style.marginRight = `${margin_side}px`;
             cell.style.marginTop = `${margin_top}px`;
@@ -93,9 +174,30 @@ function initField() {
         }
     }
     initSnake();
-    initFood();
     initScore();
+    initMenu();
     startInterval();
+}
+
+function startButtonClick() {
+    let inputCntFood = document.getElementById('init-food');
+    initCntFood = parseInt(inputCntFood.value);
+    let inputBoost = document.getElementById('boost');
+    boost = inputBoost.checked;
+    let inputImmortal = document.getElementById('immortal');
+    immortal = inputImmortal.checked;
+
+    let userConfig = {
+        initCntFood: initCntFood,
+        boost: boost,
+        immortal: immortal
+    };
+    localStorage.setItem('userConfig', JSON.stringify(userConfig));
+    initConfig();
+    initFood();
+    let menu = document.getElementsByClassName('menu')[0];
+    menu.style.visibility = 'hidden';
+
 }
 
 function drawSnake(head_row = 0, head_col = 0, tail_row = 0, tail_col = 0, cutPos = -1) {
@@ -135,7 +237,7 @@ function drawFood(pos, flag = true) {
 
 function drawScore() {
     let cell = document.getElementsByClassName('score')[0];
-    cell.textContent = `Score: ${cntFoodEaten}`;
+    cell.textContent = `Score: ${snake.length - initSnakeLen}`;
 }
 
 function move(dir) {
@@ -166,6 +268,7 @@ function move(dir) {
             break;
     }
     drawSnake(head_row, head_col, tail_row, tail_col);
+    drawScore();
 }
 
 function generateFood() {
@@ -191,8 +294,8 @@ function deleteFood(pos) {
 }
 
 function increaseSpeed() {
-    if (cntFoodEaten == 2) {
-        timeMove = timeMove / 2;
+    if (boost && cntFoodEaten % 5 == 0) {
+        timeMove = timeMove * timeReduce;
     }
 }
 
@@ -258,16 +361,8 @@ function startInterval() {
     }, delay);
 }
 
-
-function keyBar(e) {
-    e = e || window.Event;
-    if ([RIGHT, LEFT, UP, DOWN].includes(e.keyCode)) {
-        if (e.keyCode == RIGHT && prevKeyCode != LEFT || e.keyCode == LEFT && prevKeyCode != RIGHT ||
-            e.keyCode == UP && prevKeyCode != DOWN || e.keyCode == DOWN && prevKeyCode != UP) {
-            keyCode = e.keyCode;
-        }
-    }
-    if (e.keyCode == SPACE) {
+function pause() {
+    if (!menuShow) {
         if (!paused) {
             clearInterval(intervalId);
             paused = true;
@@ -278,3 +373,24 @@ function keyBar(e) {
         }
     }
 }
+
+function settings() {
+   window.location.reload();
+}
+
+function keyBar(e) {
+    e = e || window.Event;
+    if ([RIGHT, LEFT, UP, DOWN].includes(e.keyCode)) {
+        if (e.keyCode == RIGHT && prevKeyCode != LEFT || e.keyCode == LEFT && prevKeyCode != RIGHT ||
+            e.keyCode == UP && prevKeyCode != DOWN || e.keyCode == DOWN && prevKeyCode != UP) {
+            keyCode = e.keyCode;
+        }
+    }
+    if (e.keyCode == SPACE) {
+        pause();
+    }
+    if (e.keyCode == SETTINGS) {
+        settings();
+    }
+}
+
